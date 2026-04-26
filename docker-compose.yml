@@ -1,0 +1,65 @@
+services:
+  emotion-api:
+    # ───── البناء ─────
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # ───── الاسم والتعريف ─────
+    container_name: emotion-detection-api
+    image: emotion-detection-api:latest
+
+    # ───── الشبكة ─────
+    ports:
+      - "8000:8000"
+
+    # ───── متغيرات البيئة ─────
+    env_file:
+      - .env
+    environment:
+      - MODEL_DIR=./models/results
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+
+    # ───── التخزين ─────
+    volumes:
+      - uploads-data:/app/uploads
+
+    # ───── إدارة دورة الحياة ─────
+    restart: unless-stopped
+
+    # ───── الموارد ─────
+    #deploy:
+    # resources:
+    #  limits:
+    #   memory: 2G
+    #  cpus: "2.0"
+    # reservations:
+    #  memory: 512M
+    # cpus: "0.5"
+
+    # ───── فحص الصحة ─────
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # ───── السجلات ─────
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ───── التخزين الدائم ─────
+volumes:
+  uploads-data:
+    driver: local

@@ -1,0 +1,20 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+psycopg2-binary
+python-multipart
+librosa
+soundfile
+numpy<2
+scipy
+joblib
+scikit-learn
+Pillow
+python-dotenv
+alembic
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
+ai-edge-litert            # Linux (production) — replaces tflite-runtime, supports TF 2.15+ ops
+# tensorflow             # Mac (dev) — install manually: pip install tensorflow

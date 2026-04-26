@@ -1,0 +1,104 @@
+{
+    "model_info": {
+        "name": "Emotion Detection v3 \u2014 3-Model Ensemble",
+        "version": "3.1.0",
+        "created_date": "2026-03-10 17:28:20",
+        "framework": "TensorFlow/Keras",
+        "model_type": "Ensemble: ResNet-MLP + CNN-MLP Dual + ResNet-MLP-v2"
+    },
+    "datasets": {
+        "sources": [
+            "RAVDESS",
+            "TESS",
+            "CREMA-D",
+            "ESD"
+        ],
+        "total_raw_samples": 50922,
+        "training_samples": 13937,
+        "validation_samples": 2986,
+        "test_samples": 2987
+    },
+    "model_architecture": {
+        "mlp_input_features": 624,
+        "dual_input_features": 624,
+        "image_shape": [
+            128,
+            128,
+            1
+        ],
+        "output_classes": 7,
+        "mlp_params": 8645503,
+        "dual_params": 3123463,
+        "model3_params": 9632103,
+        "improvements": [
+            "3-model diverse ensemble",
+            "CNN branch on mel-spectrogram",
+            "SE attention blocks (ratio=4 and 8)",
+            "Swish + GELU activations",
+            "Focal loss (gamma=2.0 and 1.5)",
+            "AdamW optimiser",
+            "Warm-up + cosine LR decay",
+            "Mixup training (alpha=0.3 and 0.25)",
+            "Temperature calibration per model",
+            "Per-class threshold optimisation",
+            "Pitch (F0) + harmonic/percussive features",
+            "MFCC delta covariance + log-mel band energies",
+            "Class weights"
+        ]
+    },
+    "emotions": {
+        "classes": [
+            "angry",
+            "disgust",
+            "fear",
+            "happy",
+            "neutral",
+            "sad",
+            "surprise"
+        ],
+        "num_classes": 7
+    },
+    "performance": {
+        "2_model_ensemble_accuracy": 0.8938734516237027,
+        "2_model_ensemble_f1": 0.8943118333952628,
+        "final_accuracy": 0.8938734516237027,
+        "final_f1": 0.8943118333952628,
+        "mlp_standalone_accuracy": 0.844660222530365
+    },
+    "inference": {
+        "ensemble_weights": {
+            "mlp": 0.1,
+            "dual": 0.5,
+            "model3": 0.4
+        },
+        "temperatures": {
+            "mlp": 0.7,
+            "dual": 0.7,
+            "model3": 0.7999999999999999
+        },
+        "thresholds": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "mobile_model": "emotion_detection_model.tflite  (MLP only)",
+        "server_models": "All 3 models for full ensemble"
+    },
+    "files": {
+        "tflite_mlp": "emotion_detection_model.tflite",
+        "tflite_model3": "emotion_detection_model3.tflite",
+        "keras_mlp": "checkpoints/best_model.keras",
+        "keras_dual": "checkpoints/best_dual_model.keras",
+        "keras_model3": "checkpoints/best_model3.keras",
+        "scaler_mlp": "scaler.pkl",
+        "scaler_dual": "scaler_dual.pkl",
+        "label_encoder": "label_encoder.pkl",
+        "inference_config": "inference_config.json",
+        "tflite_mlp_size_kb": 8603.1171875,
+        "tflite_m3_size_kb": 9589.3359375
+    }
+}

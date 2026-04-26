@@ -1,0 +1,48 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker
+*.log
+
+# Uploads (مش هترفعها)
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files (لو فيه)
+.pytest_cache/
+
+# Keras model files (we only need .tflite)
+*.keras
+*.h5
+
+# Zip archives
+*.zip
+
+# Training checkpoints
+models/results/checkpoints/
+models/results/emotion_detection_v3_final/
+models/results/emotion_detection_package_v3/
+
+# Keep only what we need
+!models/results/*.tflite
+!models/results/*.pkl

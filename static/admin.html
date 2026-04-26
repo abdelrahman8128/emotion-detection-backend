@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+  /* Login */
+  .login-overlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .login-box { background: #1e293b; padding: 2.5rem; border-radius: 16px; width: 360px; box-shadow: 0 25px 50px rgba(0,0,0,.4); }
+  .login-box h2 { text-align: center; margin-bottom: 1.5rem; color: #818cf8; font-size: 1.5rem; }
+  .login-box input { width: 100%; padding: .75rem 1rem; margin-bottom: 1rem; border: 1px solid #334155; border-radius: 8px; background: #0f172a; color: #e2e8f0; font-size: .95rem; }
+  .login-box input:focus { outline: none; border-color: #818cf8; }
+  .login-box button { width: 100%; padding: .75rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+  .login-box button:hover { background: #4f46e5; }
+  .login-error { color: #f87171; font-size: .85rem; margin-bottom: .75rem; text-align: center; display: none; }
+
+  /* Layout */
+  .app { display: none; }
+  .topbar { background: #1e293b; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+  .topbar h1 { font-size: 1.25rem; color: #818cf8; }
+  .topbar .user-info { display: flex; align-items: center; gap: 1rem; }
+  .topbar .user-info span { color: #94a3b8; font-size: .9rem; }
+  .btn-logout { padding: .4rem 1rem; background: #ef4444; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .85rem; }
+  .btn-logout:hover { background: #dc2626; }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+  /* Date filter */
+  .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
+  .filters label { color: #94a3b8; font-size: .85rem; }
+  .filters input[type="date"] { padding: .4rem .6rem; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; }
+  .btn-filter { padding: .45rem 1.2rem; background: #6366f1; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .85rem; }
+  .btn-filter:hover { background: #4f46e5; }
+
+  /* Stats cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: #1e293b; padding: 1.25rem; border-radius: 12px; border: 1px solid #334155; }
+  .stat-card .label { font-size: .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-card .value { font-size: 2rem; font-weight: 700; margin-top: .25rem; }
+  .stat-card .value.green { color: #4ade80; }
+  .stat-card .value.red { color: #f87171; }
+  .stat-card .value.blue { color: #60a5fa; }
+  .stat-card .value.yellow { color: #fbbf24; }
+  .stat-card .value.purple { color: #a78bfa; }
+
+  /* Sections */
+  .section { margin-bottom: 2rem; }
+  .section h3 { font-size: 1.1rem; margin-bottom: 1rem; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: .5rem; }
+
+  /* Two column layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
+  th { background: #334155; padding: .75rem 1rem; text-align: left; font-size: .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  td { padding: .75rem 1rem; border-top: 1px solid #1e293b; font-size: .9rem; }
+  tr:hover td { background: #262f3f; }
+  .badge { padding: .2rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+  .badge-red { background: #7f1d1d; color: #fca5a5; }
+  .badge-yellow { background: #78350f; color: #fde68a; }
+  .badge-green { background: #14532d; color: #86efac; }
+
+  /* Emotion bars */
+  .emo-bar-container { margin-bottom: .5rem; }
+  .emo-bar-label { display: flex; justify-content: space-between; font-size: .8rem; margin-bottom: .15rem; }
+  .emo-bar-track { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+  .emo-bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+  /* Agent ranking */
+  .ranking-item { display: flex; justify-content: space-between; align-items: center; padding: .6rem 1rem; background: #1e293b; border-radius: 8px; margin-bottom: .5rem; border: 1px solid #334155; }
+  .ranking-item .rank { font-weight: 700; color: #818cf8; width: 1.5rem; }
+  .ranking-item .name { flex: 1; margin-left: .75rem; }
+  .ranking-item .score { font-weight: 600; }
+
+  /* Alerts list */
+  .alert-item { padding: .75rem 1rem; background: #1e293b; border-radius: 8px; margin-bottom: .5rem; border-left: 3px solid #f87171; }
+  .alert-item .alert-type { font-weight: 600; color: #fca5a5; font-size: .85rem; }
+  .alert-item .alert-desc { color: #94a3b8; font-size: .85rem; margin-top: .2rem; }
+  .alert-item .alert-time { color: #64748b; font-size: .75rem; margin-top: .2rem; }
+
+  /* Clickable row */
+  tr.clickable { cursor: pointer; }
+
+  /* Agent profile modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; z-index: 50; overflow-y: auto; padding: 2rem; }
+  .modal-content { max-width: 900px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 2rem; }
+  .modal-close { float: right; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; }
+  .modal-close:hover { color: #fff; }
+
+  /* Pagination */
+  .pagination { display: flex; gap: .5rem; justify-content: center; margin-top: 1rem; }
+  .pagination button { padding: .4rem .8rem; background: #334155; color: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; }
+  .pagination button.active { background: #6366f1; }
+  .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .empty { text-align: center; padding: 2rem; color: #64748b; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <div class="login-error" id="loginError">Invalid username or password</div>
+    <input type="text" id="username" placeholder="Username" value="admin">
+    <input type="password" id="password" placeholder="Password" value="admin">
+    <button onclick="login()">Sign In</button>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <div class="topbar">
+    <h1>Admin Dashboard</h1>
+    <div class="user-info">
+      <span id="userLabel"></span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="container">
+
+    <!-- Filters -->
+    <div class="filters">
+      <label>From</label>
+      <input type="date" id="startDate">
+      <label>To</label>
+      <input type="date" id="endDate">
+      <button class="btn-filter" onclick="loadDashboard()">Apply</button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Two column: emotion distribution + alerts -->
+    <div class="two-col">
+      <div class="section">
+        <h3>Customer Emotion Distribution</h3>
+        <div id="emotionBars"></div>
+      </div>
+      <div class="section">
+        <h3>Recent Alerts</h3>
+        <div id="alertsList"></div>
+      </div>
+    </div>
+
+    <!-- Two column: top agents -->
+    <div class="two-col">
+      <div class="section">
+        <h3>Top Agents by Satisfaction</h3>
+        <div id="topSatisfaction"></div>
+      </div>
+      <div class="section">
+        <h3>Highest Customer Anger</h3>
+        <div id="topAnger"></div>
+      </div>
+    </div>
+
+    <!-- Agents table -->
+    <div class="section">
+      <h3>All Agents</h3>
+      <table>
+        <thead><tr><th>Name</th><th>Username</th><th>Team</th><th>Total Calls</th><th>Joined</th></tr></thead>
+        <tbody id="agentsTable"></tbody>
+      </table>
+      <div class="pagination" id="agentsPagination"></div>
+    </div>
+
+    <!-- All calls -->
+    <div class="section">
+      <h3>All Calls</h3>
+      <table>
+        <thead><tr><th>Agent</th><th>Duration</th><th>Dominant Emotion</th><th>Alert</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="callsTable"></tbody>
+      </table>
+      <div class="pagination" id="callsPagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Agent profile modal -->
+<div class="modal-overlay" id="agentModal">
+  <div class="modal-content" id="agentModalContent"></div>
+</div>
+
+<script>
+const API = '';
+let TOKEN = '';
+let agentsPage = 1, callsPage = 1;
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function login() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    if (!r.ok) throw 'fail';
+    const d = await r.json();
+    if (d.role !== 'admin') { showError('Admin access only'); return; }
+    TOKEN = d.access_token;
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userLabel').textContent = `admin: ${u}`;
+    loadDashboard();
+    loadAgents();
+    loadCalls();
+  } catch { showError('Invalid username or password'); }
+}
+
+function logout() {
+  TOKEN = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+function showError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function headers() { return { 'Authorization': `Bearer ${TOKEN}` }; }
+
+function dateParams() {
+  const s = document.getElementById('startDate').value;
+  const e = document.getElementById('endDate').value;
+  let p = '';
+  if (s) p += `start_date=${s}&`;
+  if (e) p += `end_date=${e}&`;
+  return p;
+}
+
+// ── Emotion colors ───────────────────────────────────────────────────────────
+const EMO_COLORS = {
+  neutral:'#94a3b8', happy:'#4ade80', sad:'#60a5fa', angry:'#f87171',
+  fear:'#fbbf24', disgust:'#a78bfa', surprise:'#f472b6'
+};
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const r = await fetch(`${API}/admin/dashboard?${dateParams()}`, {headers: headers()});
+  const d = await r.json();
+
+  document.getElementById('statsGrid').innerHTML = `
+    ${statCard('Total Calls', d.total_calls, 'blue')}
+    ${statCard('Active Agents', d.active_agents, 'purple')}
+    ${statCard('Angry Calls', d.angry_calls, 'red')}
+    ${statCard('Avg Anger', (d.avg_anger_pct * 100).toFixed(1) + '%', 'yellow')}
+    ${statCard('Satisfaction', (d.avg_satisfaction_score * 100).toFixed(1) + '%', 'green')}
+    ${statCard('Unresolved Alerts', d.total_unresolved_alerts, 'red')}
+  `;
+
+  // Emotion bars
+  document.getElementById('emotionBars').innerHTML = d.customer_emotion_distribution
+    .map(e => `
+      <div class="emo-bar-container">
+        <div class="emo-bar-label"><span>${e.emotion}</span><span>${e.percentage}%</span></div>
+        <div class="emo-bar-track"><div class="emo-bar-fill" style="width:${e.percentage}%;background:${EMO_COLORS[e.emotion]||'#64748b'}"></div></div>
+      </div>`).join('');
+
+  // Alerts
+  document.getElementById('alertsList').innerHTML = d.recent_alerts.length
+    ? d.recent_alerts.map(a => `
+      <div class="alert-item">
+        <div class="alert-type">${a.type.replace('_',' ')}</div>
+        <div class="alert-desc">${a.description || ''}</div>
+        <div class="alert-time">${new Date(a.triggered_at).toLocaleString()}</div>
+      </div>`).join('')
+    : '<div class="empty">No alerts</div>';
+
+  // Rankings
+  document.getElementById('topSatisfaction').innerHTML = rankingList(d.top_agents_by_satisfaction, 'green');
+  document.getElementById('topAnger').innerHTML = rankingList(d.top_agents_by_anger, 'red');
+}
+
+function statCard(label, value, color) {
+  return `<div class="stat-card"><div class="label">${label}</div><div class="value ${color}">${value}</div></div>`;
+}
+
+function rankingList(items, color) {
+  if (!items.length) return '<div class="empty">No data</div>';
+  return items.map((it, i) => `
+    <div class="ranking-item">
+      <span class="rank">${i+1}</span>
+      <span class="name">${it.agent_name}</span>
+      <span class="score" style="color:${color==='green'?'#4ade80':'#f87171'}">${(it.value*100).toFixed(1)}%</span>
+      <span style="color:#64748b;margin-left:.5rem;font-size:.8rem">(${it.total_calls} calls)</span>
+    </div>`).join('');
+}
+
+// ── Agents table ─────────────────────────────────────────────────────────────
+async function loadAgents(page = 1) {
+  agentsPage = page;
+  const r = await fetch(`${API}/admin/agents?page=${page}&page_size=10`, {headers: headers()});
+  const d = await r.json();
+  document.getElementById('agentsTable').innerHTML = d.agents.map(a => `
+    <tr class="clickable" onclick="openAgentProfile('${a.agent_id}')">
+      <td>${a.name}</td><td>${a.username}</td><td>${a.team||'-'}</td>
+      <td>${a.total_calls}</td><td>${new Date(a.created_at).toLocaleDateString()}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty">No agents</td></tr>';
+  document.getElementById('agentsPagination').innerHTML = paginationBtns(d.page, d.total_pages, 'loadAgents');
+}
+
+// ── Calls table ──────────────────────────────────────────────────────────────
+async function loadCalls(page = 1) {
+  callsPage = page;
+  const r = await fetch(`${API}/admin/calls?${dateParams()}page=${page}&page_size=10`, {headers: headers()});
+  const d = await r.json();
+  document.getElementById('callsTable').innerHTML = d.calls.map(c => `
+    <tr>
+      <td>${c.agent_name}</td>
+      <td>${c.duration ? c.duration + 's' : '-'}</td>
+      <td>${c.dominant_emotion || '-'}</td>
+      <td><span class="badge badge-${c.alert_level}">${c.alert_level}</span></td>
+      <td>${c.status}</td>
+      <td>${new Date(c.start_time).toLocaleString()}</td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty">No calls</td></tr>';
+  document.getElementById('callsPagination').innerHTML = paginationBtns(d.page, d.total_pages, 'loadCalls');
+}
+
+// ── Agent profile modal ─────────────────────────────────────────────────────
+async function openAgentProfile(agentId) {
+  const dp = dateParams();
+  const r = await fetch(`${API}/admin/agents/${agentId}/profile?${dp}page_size=5`, {headers: headers()});
+  const p = await r.json();
+
+  document.getElementById('agentModalContent').innerHTML = `
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2 style="color:#818cf8;margin-bottom:.25rem">${p.name}</h2>
+    <p style="color:#64748b;margin-bottom:1.5rem">@${p.username} &middot; ${p.team||'No team'} &middot; joined ${new Date(p.created_at).toLocaleDateString()}</p>
+
+    <div class="stats-grid" style="margin-bottom:1.5rem">
+      ${statCard('Calls', p.stats.total_calls, 'blue')}
+      ${statCard('Satisfaction', (p.stats.positive_rate*100).toFixed(1)+'%', 'green')}
+      ${statCard('Anger Rate', (p.stats.anger_rate*100).toFixed(1)+'%', 'red')}
+      ${statCard('Escalations', p.stats.escalations, 'yellow')}
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h3 style="color:#94a3b8;font-size:.95rem;margin-bottom:.75rem">Customer Emotions</h3>
+        ${p.customer_emotion_breakdown.map(e => `
+          <div class="emo-bar-container">
+            <div class="emo-bar-label"><span>${e.emotion}</span><span>${e.percentage}%</span></div>
+            <div class="emo-bar-track"><div class="emo-bar-fill" style="width:${e.percentage}%;background:${EMO_COLORS[e.emotion]||'#64748b'}"></div></div>
+          </div>`).join('')}
+      </div>
+      <div>
+        <h3 style="color:#94a3b8;font-size:.95rem;margin-bottom:.75rem">Agent Emotions</h3>
+        ${p.agent_emotion_breakdown.map(e => `
+          <div class="emo-bar-container">
+            <div class="emo-bar-label"><span>${e.emotion}</span><span>${e.percentage}%</span></div>
+            <div class="emo-bar-track"><div class="emo-bar-fill" style="width:${e.percentage}%;background:${EMO_COLORS[e.emotion]||'#64748b'}"></div></div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <h3 style="color:#94a3b8;font-size:.95rem;margin:1.5rem 0 .75rem">Recent Calls</h3>
+    <table>
+      <thead><tr><th>Duration</th><th>Dominant Emotion</th><th>Alert</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>${p.calls.map(c => `
+        <tr>
+          <td>${c.duration?c.duration+'s':'-'}</td>
+          <td>${c.dominant_emotion||'-'}</td>
+          <td><span class="badge badge-${c.alert_level}">${c.alert_level}</span></td>
+          <td>${c.status}</td>
+          <td>${new Date(c.start_time).toLocaleString()}</td>
+        </tr>`).join('')}</tbody>
+    </table>
+  `;
+
+  document.getElementById('agentModal').style.display = 'block';
+}
+
+function closeModal() { document.getElementById('agentModal').style.display = 'none'; }
+document.getElementById('agentModal').addEventListener('click', e => { if (e.target.id === 'agentModal') closeModal(); });
+
+// ── Pagination ───────────────────────────────────────────────────────────────
+function paginationBtns(current, total, fn) {
+  if (total <= 1) return '';
+  let h = '';
+  h += `<button ${current<=1?'disabled':''} onclick="${fn}(${current-1})">Prev</button>`;
+  for (let i = 1; i <= total; i++) {
+    h += `<button class="${i===current?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  }
+  h += `<button ${current>=total?'disabled':''} onclick="${fn}(${current+1})">Next</button>`;
+  return h;
+}
+
+// Enter key on login
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>

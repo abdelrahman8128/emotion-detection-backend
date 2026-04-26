@@ -1,0 +1,32 @@
+{
+    "ensemble_weights": {
+        "mlp": 0.1,
+        "dual": 0.5,
+        "model3": 0.4
+    },
+    "temperatures": {
+        "mlp": 0.7,
+        "dual": 0.7,
+        "model3": 0.7999999999999999
+    },
+    "thresholds": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "classes": [
+        "angry",
+        "disgust",
+        "fear",
+        "happy",
+        "neutral",
+        "sad",
+        "surprise"
+    ],
+    "final_accuracy": 0.8938734516237027,
+    "final_f1": 0.8943118333952628
+}

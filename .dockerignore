@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.venv
+venv/
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Docker
+docker-compose*.yml
+Dockerfile
+
+# Env (مش هينسخ في الـ image)
+.env
+.env.*
+
+# Uploads (مش محتاج تنسخهم)
+uploads/
+
+# Documentation
+README.md
+*.md
+
+# Tests
+tests/

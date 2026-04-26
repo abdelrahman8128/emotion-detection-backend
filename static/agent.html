@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+  /* Login */
+  .login-overlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .login-box { background: #1e293b; padding: 2.5rem; border-radius: 16px; width: 360px; box-shadow: 0 25px 50px rgba(0,0,0,.4); }
+  .login-box h2 { text-align: center; margin-bottom: 1.5rem; color: #34d399; font-size: 1.5rem; }
+  .login-box input { width: 100%; padding: .75rem 1rem; margin-bottom: 1rem; border: 1px solid #334155; border-radius: 8px; background: #0f172a; color: #e2e8f0; font-size: .95rem; }
+  .login-box input:focus { outline: none; border-color: #34d399; }
+  .login-box button { width: 100%; padding: .75rem; background: #10b981; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+  .login-box button:hover { background: #059669; }
+  .login-error { color: #f87171; font-size: .85rem; margin-bottom: .75rem; text-align: center; display: none; }
+
+  /* Layout */
+  .app { display: none; }
+  .topbar { background: #1e293b; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+  .topbar h1 { font-size: 1.25rem; color: #34d399; }
+  .topbar .user-info { display: flex; align-items: center; gap: 1rem; }
+  .topbar .user-info span { color: #94a3b8; font-size: .9rem; }
+  .btn-logout { padding: .4rem 1rem; background: #ef4444; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .85rem; }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+  /* Profile card */
+  .profile-card { background: #1e293b; border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; border: 1px solid #334155; display: flex; align-items: center; gap: 1.5rem; }
+  .profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: #34d399; }
+  .profile-info h2 { font-size: 1.25rem; }
+  .profile-info p { color: #64748b; font-size: .9rem; }
+
+  /* Filters */
+  .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
+  .filters label { color: #94a3b8; font-size: .85rem; }
+  .filters input[type="date"] { padding: .4rem .6rem; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; }
+  .btn-filter { padding: .45rem 1.2rem; background: #10b981; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .85rem; }
+
+  /* Stats cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: #1e293b; padding: 1.25rem; border-radius: 12px; border: 1px solid #334155; }
+  .stat-card .label { font-size: .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-card .value { font-size: 2rem; font-weight: 700; margin-top: .25rem; }
+  .stat-card .value.green { color: #4ade80; }
+  .stat-card .value.red { color: #f87171; }
+  .stat-card .value.blue { color: #60a5fa; }
+  .stat-card .value.yellow { color: #fbbf24; }
+
+  /* Sections */
+  .section { margin-bottom: 2rem; }
+  .section h3 { font-size: 1.1rem; margin-bottom: 1rem; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: .5rem; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* Emotion bars */
+  .emo-bar-container { margin-bottom: .5rem; }
+  .emo-bar-label { display: flex; justify-content: space-between; font-size: .8rem; margin-bottom: .15rem; }
+  .emo-bar-track { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+  .emo-bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
+  th { background: #334155; padding: .75rem 1rem; text-align: left; font-size: .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  td { padding: .75rem 1rem; border-top: 1px solid #1e293b; font-size: .9rem; }
+  tr:hover td { background: #262f3f; }
+  tr.clickable { cursor: pointer; }
+  .badge { padding: .2rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+  .badge-red { background: #7f1d1d; color: #fca5a5; }
+  .badge-yellow { background: #78350f; color: #fde68a; }
+  .badge-green { background: #14532d; color: #86efac; }
+
+  /* Pagination */
+  .pagination { display: flex; gap: .5rem; justify-content: center; margin-top: 1rem; }
+  .pagination button { padding: .4rem .8rem; background: #334155; color: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; }
+  .pagination button.active { background: #10b981; }
+  .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .empty { text-align: center; padding: 2rem; color: #64748b; }
+
+  /* Timeline modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; z-index: 50; overflow-y: auto; padding: 2rem; }
+  .modal-content { max-width: 850px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 2rem; }
+  .modal-close { float: right; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; }
+  .modal-close:hover { color: #fff; }
+
+  /* Timeline visualization */
+  .timeline-track { display: flex; gap: 2px; flex-wrap: wrap; margin-top: .5rem; margin-bottom: 1.5rem; }
+  .timeline-block { width: 18px; height: 28px; border-radius: 3px; position: relative; cursor: default; }
+  .timeline-block:hover::after { content: attr(data-tip); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: #0f172a; padding: .3rem .6rem; border-radius: 4px; font-size: .7rem; white-space: nowrap; z-index: 10; border: 1px solid #334155; }
+  .timeline-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .timeline-legend span { display: flex; align-items: center; gap: .3rem; font-size: .75rem; color: #94a3b8; }
+  .timeline-legend .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>Agent Login</h2>
+    <div class="login-error" id="loginError">Invalid credentials</div>
+    <input type="text" id="username" placeholder="Username" value="sara">
+    <input type="password" id="password" placeholder="Password" value="pass123">
+    <button onclick="login()">Sign In</button>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <div class="topbar">
+    <h1>My Dashboard</h1>
+    <div class="user-info">
+      <span id="userLabel"></span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="container">
+
+    <!-- Profile card -->
+    <div class="profile-card" id="profileCard"></div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <label>From</label>
+      <input type="date" id="startDate">
+      <label>To</label>
+      <input type="date" id="endDate">
+      <button class="btn-filter" onclick="loadAll()">Apply</button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Two column: emotions -->
+    <div class="two-col">
+      <div class="section">
+        <h3>Customer Emotions</h3>
+        <div id="customerEmotions"></div>
+      </div>
+      <div class="section">
+        <h3>My Emotions</h3>
+        <div id="agentEmotions"></div>
+      </div>
+    </div>
+
+    <!-- Calls table -->
+    <div class="section">
+      <h3>My Calls</h3>
+      <table>
+        <thead><tr><th>Duration</th><th>Dominant Emotion</th><th>Alert</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="callsTable"></tbody>
+      </table>
+      <div class="pagination" id="callsPagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline modal -->
+<div class="modal-overlay" id="timelineModal">
+  <div class="modal-content" id="timelineContent"></div>
+</div>
+
+<script>
+const API = '';
+let TOKEN = '';
+let callsPage = 1;
+
+const EMO_COLORS = {
+  neutral:'#94a3b8', happy:'#4ade80', sad:'#60a5fa', angry:'#f87171',
+  fear:'#fbbf24', disgust:'#a78bfa', surprise:'#f472b6'
+};
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function login() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    if (!r.ok) throw 'fail';
+    const d = await r.json();
+    if (d.role !== 'agent') { showError('Agent accounts only'); return; }
+    TOKEN = d.access_token;
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userLabel').textContent = u;
+    loadAll();
+  } catch { showError('Invalid username or password'); }
+}
+
+function logout() {
+  TOKEN = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+function showError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function headers() { return { 'Authorization': `Bearer ${TOKEN}` }; }
+
+function dateParams() {
+  const s = document.getElementById('startDate').value;
+  const e = document.getElementById('endDate').value;
+  let p = '';
+  if (s) p += `start_date=${s}&`;
+  if (e) p += `end_date=${e}&`;
+  return p;
+}
+
+async function loadAll() {
+  loadProfile();
+  loadPerformance();
+  loadCalls();
+}
+
+// ── Profile ──────────────────────────────────────────────────────────────────
+async function loadProfile() {
+  const r = await fetch(`${API}/me/profile`, {headers: headers()});
+  const p = await r.json();
+  const initials = p.name.split(' ').map(w => w[0]).join('');
+  document.getElementById('profileCard').innerHTML = `
+    <div class="profile-avatar">${initials}</div>
+    <div class="profile-info">
+      <h2>${p.name}</h2>
+      <p>@${p.username} &middot; ${p.team||'No team'} &middot; joined ${new Date(p.created_at).toLocaleDateString()}</p>
+    </div>
+  `;
+}
+
+// ── Performance ──────────────────────────────────────────────────────────────
+async function loadPerformance() {
+  const r = await fetch(`${API}/me/performance?${dateParams()}`, {headers: headers()});
+  const d = await r.json();
+  const s = d.stats;
+
+  document.getElementById('statsGrid').innerHTML = `
+    ${statCard('Total Calls', s.total_calls, 'blue')}
+    ${statCard('Satisfaction', (s.positive_rate*100).toFixed(1)+'%', 'green')}
+    ${statCard('Anger Rate', (s.anger_rate*100).toFixed(1)+'%', 'red')}
+    ${statCard('Escalations', s.escalations, 'yellow')}
+  `;
+
+  document.getElementById('customerEmotions').innerHTML = emoBars(d.customer_emotion_breakdown);
+  document.getElementById('agentEmotions').innerHTML = emoBars(d.agent_emotion_breakdown);
+}
+
+function statCard(label, value, color) {
+  return `<div class="stat-card"><div class="label">${label}</div><div class="value ${color}">${value}</div></div>`;
+}
+
+function emoBars(items) {
+  return items.map(e => `
+    <div class="emo-bar-container">
+      <div class="emo-bar-label"><span>${e.emotion}</span><span>${e.percentage}%</span></div>
+      <div class="emo-bar-track"><div class="emo-bar-fill" style="width:${e.percentage}%;background:${EMO_COLORS[e.emotion]||'#64748b'}"></div></div>
+    </div>`).join('');
+}
+
+// ── Calls ────────────────────────────────────────────────────────────────────
+async function loadCalls(page = 1) {
+  callsPage = page;
+  const r = await fetch(`${API}/me/calls?${dateParams()}page=${page}&page_size=10`, {headers: headers()});
+  const d = await r.json();
+
+  document.getElementById('callsTable').innerHTML = d.calls.map(c => `
+    <tr class="clickable" onclick="openTimeline('${c.call_id}')">
+      <td>${c.duration?c.duration+'s':'-'}</td>
+      <td>${c.dominant_emotion||'-'}</td>
+      <td><span class="badge badge-${c.alert_level}">${c.alert_level}</span></td>
+      <td>${c.status}</td>
+      <td>${new Date(c.start_time).toLocaleString()}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty">No calls yet</td></tr>';
+
+  document.getElementById('callsPagination').innerHTML = paginationBtns(d.page, d.total_pages, 'loadCalls');
+}
+
+// ── Timeline modal ───────────────────────────────────────────────────────────
+async function openTimeline(callId) {
+  const r = await fetch(`${API}/calls/${callId}/timeline`, {headers: headers()});
+  const d = await r.json();
+
+  const legend = Object.entries(EMO_COLORS).map(([e,c]) =>
+    `<span><span class="dot" style="background:${c}"></span>${e}</span>`
+  ).join('');
+
+  document.getElementById('timelineContent').innerHTML = `
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2 style="color:#34d399;margin-bottom:.25rem">Call Timeline</h2>
+    <p style="color:#64748b;margin-bottom:1.5rem">Duration: ${d.duration||'?'}s &middot; ${d.agent_timeline.length} segments per speaker</p>
+
+    <div class="timeline-legend">${legend}</div>
+
+    <h3 style="color:#94a3b8;font-size:.95rem;margin-bottom:.5rem">Agent</h3>
+    <div class="timeline-track">
+      ${d.agent_timeline.map(s => `<div class="timeline-block" style="background:${EMO_COLORS[s.emotion]||'#64748b'}" data-tip="${s.second}s: ${s.emotion} (${(s.confidence*100).toFixed(0)}%)"></div>`).join('')}
+    </div>
+
+    <h3 style="color:#94a3b8;font-size:.95rem;margin-bottom:.5rem">Customer</h3>
+    <div class="timeline-track">
+      ${d.customer_timeline.map(s => `<div class="timeline-block" style="background:${EMO_COLORS[s.emotion]||'#64748b'}" data-tip="${s.second}s: ${s.emotion} (${(s.confidence*100).toFixed(0)}%)"></div>`).join('')}
+    </div>
+  `;
+
+  document.getElementById('timelineModal').style.display = 'block';
+}
+
+function closeModal() { document.getElementById('timelineModal').style.display = 'none'; }
+document.getElementById('timelineModal').addEventListener('click', e => { if (e.target.id === 'timelineModal') closeModal(); });
+
+// ── Pagination ───────────────────────────────────────────────────────────────
+function paginationBtns(current, total, fn) {
+  if (total <= 1) return '';
+  let h = `<button ${current<=1?'disabled':''} onclick="${fn}(${current-1})">Prev</button>`;
+  for (let i = 1; i <= total; i++) h += `<button class="${i===current?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  h += `<button ${current>=total?'disabled':''} onclick="${fn}(${current+1})">Next</button>`;
+  return h;
+}
+
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>
