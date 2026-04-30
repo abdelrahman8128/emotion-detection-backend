@@ -48,6 +48,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+
 app.include_router(calls.router)
 app.include_router(agents.router)   # /me/*
 app.include_router(admin.router)    # /admin/*
