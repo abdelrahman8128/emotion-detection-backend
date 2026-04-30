@@ -1,395 +1,466 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Emotion Detection — Live Demo</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emotion Detection — Live Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f0f13;
-      color: #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 40px 16px;
-    }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f0f13;
+        color: #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        padding: 40px 16px;
+      }
 
-    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 6px; }
-    .subtitle { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .subtitle {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 40px;
+      }
 
-    /* Big emotion display */
-    #emotion-display {
-      width: 260px;
-      height: 260px;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 4px solid #2a2a35;
-      background: #16161e;
-      transition: border-color 0.4s, background 0.4s;
-      margin-bottom: 24px;
-      position: relative;
-    }
+      /* Big emotion display */
+      #emotion-display {
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid #2a2a35;
+        background: #16161e;
+        transition:
+          border-color 0.4s,
+          background 0.4s;
+        margin-bottom: 24px;
+        position: relative;
+      }
 
-    #emotion-display.recording {
-      animation: pulse 2s infinite;
-    }
+      #emotion-display.recording {
+        animation: pulse 2s infinite;
+      }
 
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
-      50%       { box-shadow: 0 0 0 20px rgba(99,102,241,0); }
-    }
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+        }
+        50% {
+          box-shadow: 0 0 0 20px rgba(99, 102, 241, 0);
+        }
+      }
 
-    #emotion-emoji { font-size: 4rem; line-height: 1; }
-    #emotion-label {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-top: 10px;
-      text-transform: capitalize;
-      letter-spacing: 0.02em;
-    }
-    #confidence {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
-    }
+      #emotion-emoji {
+        font-size: 4rem;
+        line-height: 1;
+      }
+      #emotion-label {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-top: 10px;
+        text-transform: capitalize;
+        letter-spacing: 0.02em;
+      }
+      #confidence {
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 4px;
+      }
 
-    /* Waveform bars */
-    #waveform {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      height: 48px;
-      margin-bottom: 32px;
-    }
-    .bar {
-      width: 4px;
-      border-radius: 2px;
-      background: #3b3b50;
-      transition: height 0.1s;
-      min-height: 4px;
-    }
+      /* Waveform bars */
+      #waveform {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 48px;
+        margin-bottom: 32px;
+      }
+      .bar {
+        width: 4px;
+        border-radius: 2px;
+        background: #3b3b50;
+        transition: height 0.1s;
+        min-height: 4px;
+      }
 
-    /* Controls */
-    .controls { display: flex; gap: 12px; margin-bottom: 32px; }
+      /* Controls */
+      .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+      }
 
-    button {
-      padding: 12px 28px;
-      border-radius: 9999px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    button:active { transform: scale(0.97); }
-    button:disabled { opacity: 0.35; cursor: not-allowed; }
+      button {
+        padding: 12px 28px;
+        border-radius: 9999px;
+        border: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+      button:active {
+        transform: scale(0.97);
+      }
+      button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
 
-    #btn-start { background: #6366f1; color: #fff; }
-    #btn-stop  { background: #ef4444; color: #fff; }
+      #btn-start {
+        background: #6366f1;
+        color: #fff;
+      }
+      #btn-stop {
+        background: #ef4444;
+        color: #fff;
+      }
 
-    /* Chunk interval selector */
-    .settings {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.85rem;
-      color: #666;
-      margin-bottom: 32px;
-    }
-    select {
-      background: #1e1e28;
-      color: #ccc;
-      border: 1px solid #2e2e3e;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.85rem;
-    }
+      /* Chunk interval selector */
+      .settings {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 32px;
+      }
+      select {
+        background: #1e1e28;
+        color: #ccc;
+        border: 1px solid #2e2e3e;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.85rem;
+      }
 
-    /* History */
-    #history {
-      width: 100%;
-      max-width: 480px;
-    }
-    #history h2 {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #555;
-      margin-bottom: 10px;
-    }
-    #history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 240px;
-      overflow-y: auto;
-    }
-    .history-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #16161e;
-      border: 1px solid #1e1e28;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      animation: slidein 0.3s ease;
-    }
-    @keyframes slidein {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .history-item .hi-emoji { font-size: 1.2rem; }
-    .history-item .hi-label { flex: 1; text-transform: capitalize; font-weight: 600; }
-    .history-item .hi-conf  { color: #555; font-size: 0.78rem; }
-    .history-item .hi-time  { color: #444; font-size: 0.75rem; }
+      /* History */
+      #history {
+        width: 100%;
+        max-width: 480px;
+      }
+      #history h2 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #555;
+        margin-bottom: 10px;
+      }
+      #history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 240px;
+        overflow-y: auto;
+      }
+      .history-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #16161e;
+        border: 1px solid #1e1e28;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        animation: slidein 0.3s ease;
+      }
+      @keyframes slidein {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .history-item .hi-emoji {
+        font-size: 1.2rem;
+      }
+      .history-item .hi-label {
+        flex: 1;
+        text-transform: capitalize;
+        font-weight: 600;
+      }
+      .history-item .hi-conf {
+        color: #555;
+        font-size: 0.78rem;
+      }
+      .history-item .hi-time {
+        color: #444;
+        font-size: 0.75rem;
+      }
 
-    #status {
-      font-size: 0.78rem;
-      color: #555;
-      margin-top: 16px;
-    }
-  </style>
-</head>
-<body>
+      #status {
+        font-size: 0.78rem;
+        color: #555;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Emotion Detection</h1>
+    <p class="subtitle">
+      Speak into your microphone — results update every few seconds
+    </p>
 
-<h1>Emotion Detection</h1>
-<p class="subtitle">Speak into your microphone — results update every few seconds</p>
+    <!-- Main circle -->
+    <div id="emotion-display">
+      <span id="emotion-emoji">🎤</span>
+      <span id="emotion-label">Ready</span>
+      <span id="confidence"></span>
+    </div>
 
-<!-- Main circle -->
-<div id="emotion-display">
-  <span id="emotion-emoji">🎤</span>
-  <span id="emotion-label">Ready</span>
-  <span id="confidence"></span>
-</div>
+    <!-- Waveform visualiser -->
+    <div id="waveform">
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+      <div class="bar" style="height: 8px"></div>
+    </div>
 
-<!-- Waveform visualiser -->
-<div id="waveform">
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-  <div class="bar" style="height:8px"></div>
-</div>
+    <div class="controls">
+      <button id="btn-start">▶ Start</button>
+      <button id="btn-stop" disabled>■ Stop</button>
+    </div>
 
-<div class="controls">
-  <button id="btn-start">▶ Start</button>
-  <button id="btn-stop" disabled>■ Stop</button>
-</div>
+    <div class="settings">
+      <span>Analyse every</span>
+      <select id="interval">
+        <option value="3000">3 seconds</option>
+        <option value="4000">4 seconds</option>
+        <option value="5000" selected>5 seconds</option>
+      </select>
+    </div>
 
-<div class="settings">
-  <span>Analyse every</span>
-  <select id="interval">
-    <option value="3000">3 seconds</option>
-    <option value="4000">4 seconds</option>
-    <option value="5000" selected>5 seconds</option>
-  </select>
-</div>
+    <div id="history">
+      <h2>History</h2>
+      <div id="history-list"></div>
+    </div>
 
-<div id="history">
-  <h2>History</h2>
-  <div id="history-list"></div>
-</div>
+    <p id="status">Idle</p>
 
-<p id="status">Idle</p>
+    <script>
+      const EMOTION_META = {
+        angry: { emoji: "😠", color: "#ef4444" },
+        disgust: { emoji: "🤢", color: "#84cc16" },
+        fear: { emoji: "😨", color: "#a855f7" },
+        happy: { emoji: "😊", color: "#facc15" },
+        neutral: { emoji: "😐", color: "#6366f1" },
+        sad: { emoji: "😢", color: "#38bdf8" },
+        surprise: { emoji: "😲", color: "#f97316" },
+      };
 
-<script>
-  const EMOTION_META = {
-    angry:    { emoji: "😠", color: "#ef4444" },
-    disgust:  { emoji: "🤢", color: "#84cc16" },
-    fear:     { emoji: "😨", color: "#a855f7" },
-    happy:    { emoji: "😊", color: "#facc15" },
-    neutral:  { emoji: "😐", color: "#6366f1" },
-    sad:      { emoji: "😢", color: "#38bdf8" },
-    surprise: { emoji: "😲", color: "#f97316" },
-  };
+      const API = "https://emotion-detection-api.duckdns.org/demo/predict";
 
-  const API = "http://localhost:8000/demo/predict";
+      const display = document.getElementById("emotion-display");
+      const emojiEl = document.getElementById("emotion-emoji");
+      const labelEl = document.getElementById("emotion-label");
+      const confEl = document.getElementById("confidence");
+      const btnStart = document.getElementById("btn-start");
+      const btnStop = document.getElementById("btn-stop");
+      const statusEl = document.getElementById("status");
+      const histList = document.getElementById("history-list");
+      const bars = document.querySelectorAll(".bar");
+      const intervalSel = document.getElementById("interval");
 
-  const display     = document.getElementById("emotion-display");
-  const emojiEl     = document.getElementById("emotion-emoji");
-  const labelEl     = document.getElementById("emotion-label");
-  const confEl      = document.getElementById("confidence");
-  const btnStart    = document.getElementById("btn-start");
-  const btnStop     = document.getElementById("btn-stop");
-  const statusEl    = document.getElementById("status");
-  const histList    = document.getElementById("history-list");
-  const bars        = document.querySelectorAll(".bar");
-  const intervalSel = document.getElementById("interval");
+      let stream, audioCtx, analyser, processor, animFrame;
+      let pcmSamples = []; // raw Float32 collected from mic
+      let chunkTimer = null;
+      let isRecording = false;
 
-  let stream, audioCtx, analyser, processor, animFrame;
-  let pcmSamples = [];   // raw Float32 collected from mic
-  let chunkTimer  = null;
-  let isRecording = false;
+      // ── Build a 16-bit PCM WAV blob from Float32 samples ────────────────────
+      function encodeWAV(samples, sampleRate) {
+        const numChannels = 1;
+        const bitsPerSample = 16;
+        const dataSize = samples.length * 2;
+        const buf = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buf);
 
-  // ── Build a 16-bit PCM WAV blob from Float32 samples ────────────────────
-  function encodeWAV(samples, sampleRate) {
-    const numChannels  = 1;
-    const bitsPerSample = 16;
-    const dataSize = samples.length * 2;
-    const buf  = new ArrayBuffer(44 + dataSize);
-    const view = new DataView(buf);
+        function str(off, s) {
+          for (let i = 0; i < s.length; i++)
+            view.setUint8(off + i, s.charCodeAt(i));
+        }
 
-    function str(off, s) { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); }
+        str(0, "RIFF");
+        view.setUint32(4, 36 + dataSize, true);
+        str(8, "WAVE");
+        str(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); // PCM
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(
+          28,
+          (sampleRate * numChannels * bitsPerSample) / 8,
+          true,
+        );
+        view.setUint16(32, (numChannels * bitsPerSample) / 8, true);
+        view.setUint16(34, bitsPerSample, true);
+        str(36, "data");
+        view.setUint32(40, dataSize, true);
 
-    str(0,  "RIFF");  view.setUint32(4,  36 + dataSize, true);
-    str(8,  "WAVE");  str(12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1,  true);                                          // PCM
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true);
-    view.setUint16(32, numChannels * bitsPerSample / 8, true);
-    view.setUint16(34, bitsPerSample, true);
-    str(36, "data");  view.setUint32(40, dataSize, true);
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++) {
+          const s = Math.max(-1, Math.min(1, samples[i]));
+          view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+          offset += 2;
+        }
+        return new Blob([buf], { type: "audio/wav" });
+      }
 
-    let offset = 44;
-    for (let i = 0; i < samples.length; i++) {
-      const s = Math.max(-1, Math.min(1, samples[i]));
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-      offset += 2;
-    }
-    return new Blob([buf], { type: "audio/wav" });
-  }
+      // ── Waveform animation ───────────────────────────────────────────────────
+      function animateWaveform() {
+        if (!analyser) return;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(data);
+        const step = Math.floor(data.length / bars.length);
+        bars.forEach((bar, i) => {
+          const val = data[i * step] / 255;
+          bar.style.height = 4 + val * 44 + "px";
+          bar.style.background = val > 0.4 ? "#6366f1" : "#3b3b50";
+        });
+        animFrame = requestAnimationFrame(animateWaveform);
+      }
 
-  // ── Waveform animation ───────────────────────────────────────────────────
-  function animateWaveform() {
-    if (!analyser) return;
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(data);
-    const step = Math.floor(data.length / bars.length);
-    bars.forEach((bar, i) => {
-      const val = data[i * step] / 255;
-      bar.style.height = (4 + val * 44) + "px";
-      bar.style.background = val > 0.4 ? "#6366f1" : "#3b3b50";
-    });
-    animFrame = requestAnimationFrame(animateWaveform);
-  }
+      function stopWaveform() {
+        cancelAnimationFrame(animFrame);
+        bars.forEach((b) => {
+          b.style.height = "4px";
+          b.style.background = "#3b3b50";
+        });
+      }
 
-  function stopWaveform() {
-    cancelAnimationFrame(animFrame);
-    bars.forEach(b => { b.style.height = "4px"; b.style.background = "#3b3b50"; });
-  }
+      // ── Flush collected PCM → WAV → backend ─────────────────────────────────
+      async function sendChunk() {
+        if (!isRecording || pcmSamples.length === 0) return;
 
-  // ── Flush collected PCM → WAV → backend ─────────────────────────────────
-  async function sendChunk() {
-    if (!isRecording || pcmSamples.length === 0) return;
+        const snapshot = new Float32Array(pcmSamples);
+        pcmSamples = [];
 
-    const snapshot = new Float32Array(pcmSamples);
-    pcmSamples = [];
+        const wav = encodeWAV(snapshot, audioCtx.sampleRate);
+        statusEl.textContent = "Analysing…";
+        try {
+          const form = new FormData();
+          form.append("audio", wav, "chunk.wav");
+          const res = await fetch(API, { method: "POST", body: form });
+          if (!res.ok) throw new Error(await res.text());
+          const { emotion, confidence } = await res.json();
+          showResult(emotion, confidence);
+        } catch (e) {
+          statusEl.textContent = "Error: " + e.message;
+        }
+      }
 
-    const wav = encodeWAV(snapshot, audioCtx.sampleRate);
-    statusEl.textContent = "Analysing…";
-    try {
-      const form = new FormData();
-      form.append("audio", wav, "chunk.wav");
-      const res = await fetch(API, { method: "POST", body: form });
-      if (!res.ok) throw new Error(await res.text());
-      const { emotion, confidence } = await res.json();
-      showResult(emotion, confidence);
-    } catch (e) {
-      statusEl.textContent = "Error: " + e.message;
-    }
-  }
+      // ── Show result ──────────────────────────────────────────────────────────
+      function showResult(emotion, confidence) {
+        const meta = EMOTION_META[emotion] || { emoji: "❓", color: "#888" };
+        emojiEl.textContent = meta.emoji;
+        labelEl.textContent = emotion;
+        confEl.textContent = Math.round(confidence * 100) + "% confidence";
+        display.style.borderColor = meta.color;
+        display.style.background = meta.color + "18";
+        statusEl.textContent = "Live";
 
-  // ── Show result ──────────────────────────────────────────────────────────
-  function showResult(emotion, confidence) {
-    const meta = EMOTION_META[emotion] || { emoji: "❓", color: "#888" };
-    emojiEl.textContent = meta.emoji;
-    labelEl.textContent = emotion;
-    confEl.textContent  = Math.round(confidence * 100) + "% confidence";
-    display.style.borderColor = meta.color;
-    display.style.background  = meta.color + "18";
-    statusEl.textContent = "Live";
-
-    const now  = new Date().toLocaleTimeString();
-    const item = document.createElement("div");
-    item.className = "history-item";
-    item.innerHTML = `
+        const now = new Date().toLocaleTimeString();
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
       <span class="hi-emoji">${meta.emoji}</span>
       <span class="hi-label">${emotion}</span>
       <span class="hi-conf">${Math.round(confidence * 100)}%</span>
       <span class="hi-time">${now}</span>
     `;
-    histList.prepend(item);
-    if (histList.children.length > 20) histList.lastChild.remove();
-  }
+        histList.prepend(item);
+        if (histList.children.length > 20) histList.lastChild.remove();
+      }
 
-  // ── Start ────────────────────────────────────────────────────────────────
-  btnStart.addEventListener("click", async () => {
-    stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioCtx = new AudioContext();
+      // ── Start ────────────────────────────────────────────────────────────────
+      btnStart.addEventListener("click", async () => {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioCtx = new AudioContext();
 
-    const src = audioCtx.createMediaStreamSource(stream);
+        const src = audioCtx.createMediaStreamSource(stream);
 
-    // Analyser for waveform visuals
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 64;
-    src.connect(analyser);
+        // Analyser for waveform visuals
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        src.connect(analyser);
 
-    // ScriptProcessor captures raw PCM — browser encodes nothing
-    processor = audioCtx.createScriptProcessor(4096, 1, 1);
-    processor.onaudioprocess = e => {
-      if (!isRecording) return;
-      const chunk = e.inputBuffer.getChannelData(0);
-      for (let i = 0; i < chunk.length; i++) pcmSamples.push(chunk[i]);
-    };
-    src.connect(processor);
-    processor.connect(audioCtx.destination);
+        // ScriptProcessor captures raw PCM — browser encodes nothing
+        processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        processor.onaudioprocess = (e) => {
+          if (!isRecording) return;
+          const chunk = e.inputBuffer.getChannelData(0);
+          for (let i = 0; i < chunk.length; i++) pcmSamples.push(chunk[i]);
+        };
+        src.connect(processor);
+        processor.connect(audioCtx.destination);
 
-    pcmSamples  = [];
-    isRecording = true;
+        pcmSamples = [];
+        isRecording = true;
 
-    display.classList.add("recording");
-    btnStart.disabled = true;
-    btnStop.disabled  = false;
-    emojiEl.textContent = "🎤";
-    labelEl.textContent = "Listening";
-    confEl.textContent  = "";
-    display.style.borderColor = "#6366f1";
-    display.style.background  = "#16161e";
-    statusEl.textContent = "Listening…";
+        display.classList.add("recording");
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+        emojiEl.textContent = "🎤";
+        labelEl.textContent = "Listening";
+        confEl.textContent = "";
+        display.style.borderColor = "#6366f1";
+        display.style.background = "#16161e";
+        statusEl.textContent = "Listening…";
 
-    animateWaveform();
-    chunkTimer = setInterval(sendChunk, parseInt(intervalSel.value));
-  });
+        animateWaveform();
+        chunkTimer = setInterval(sendChunk, parseInt(intervalSel.value));
+      });
 
-  // ── Stop ─────────────────────────────────────────────────────────────────
-  btnStop.addEventListener("click", () => {
-    isRecording = false;
-    clearInterval(chunkTimer);
-    processor.disconnect();
-    stream.getTracks().forEach(t => t.stop());
-    audioCtx.close();
-    stopWaveform();
+      // ── Stop ─────────────────────────────────────────────────────────────────
+      btnStop.addEventListener("click", () => {
+        isRecording = false;
+        clearInterval(chunkTimer);
+        processor.disconnect();
+        stream.getTracks().forEach((t) => t.stop());
+        audioCtx.close();
+        stopWaveform();
 
-    display.classList.remove("recording");
-    btnStart.disabled = false;
-    btnStop.disabled  = true;
-    statusEl.textContent = "Stopped";
-  });
-</script>
-</body>
+        display.classList.remove("recording");
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+        statusEl.textContent = "Stopped";
+      });
+    </script>
+  </body>
 </html>
